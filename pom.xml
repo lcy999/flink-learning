@@ -23,6 +23,7 @@
         <module>flink-learning-datalake</module>
         <module>flink-learning-extends</module>
         <module>flink-learning-k8s</module>
+        <module>lcy-flink-sql-demo</module>
     </modules>
 
     <properties>
