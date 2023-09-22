@@ -2,8 +2,11 @@ package com.lcy.flinksql.utils;
 
 import lombok.Builder;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.EnvironmentSettings;
+import org.apache.flink.table.api.SqlParserException;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.table.expressions.Expression;
@@ -18,22 +21,36 @@ import static org.apache.flink.table.api.Expressions.$;
  * @author: lcy
  * @date: 2023/7/27
  **/
+@Slf4j
 public abstract class FlinkLocalRunHandler {
 
     private StreamExecutionEnvironment env;
     private StreamTableEnvironment tEnv;
 
     public FlinkLocalRunHandler(){
-        env = StreamExecutionEnvironment.getExecutionEnvironment();
+        this(null);
+    }
+
+    public FlinkLocalRunHandler(Configuration configuration){
+        if (configuration == null) {
+            env = StreamExecutionEnvironment.getExecutionEnvironment();
+        }else{
+            env = StreamExecutionEnvironment.getExecutionEnvironment(configuration);
+        }
         env.getConfig().enableObjectReuse();
         env.getConfig().setParallelism(1);
 
         EnvironmentSettings tableEnvSettings = EnvironmentSettings.newInstance()
-                .useBlinkPlanner()
+//                .useBlinkPlanner()
                 .inStreamingMode()
                 .build();
 
         tEnv = StreamTableEnvironment.create(env, tableEnvSettings);
+        configEnv(env, tEnv);
+    }
+
+    public void configEnv(StreamExecutionEnvironment env,StreamTableEnvironment tEnv){
+
     }
 
 
@@ -49,7 +66,13 @@ public abstract class FlinkLocalRunHandler {
 
         List<String> sqls = generateRunSql();
         for (String sql : sqls) {
-            tEnv.executeSql(sql);
+            try {
+                tEnv.executeSql(sql);
+            }catch (SqlParserException sqlParserException){
+                log.error("parse failed sql: "+sql);
+                sqlParserException.printStackTrace();
+            }
+
         }
 
     }
