@@ -40,7 +40,7 @@ public class TestCollectionForTestConvertTime {
                 String sql2 = "INSERT INTO upsertSink SELECT id " +
                         " , TO_TIMESTAMP(FROM_UNIXTIME(ts/1000))" +
                         " , DATE_FORMAT(FROM_UNIXTIME(ts/1000), 'yyyy-MM-dd')" +
-                        " , DATE_FORMAT(CURRENT_TIMESTAMP, 'yyyy-MM-dd')" +
+                        " , DATE_FORMAT(CURRENT_TIMESTAMP, 'yyyyMMdd000000')" +
                         " FROM T01";
 
                 return Lists.newArrayList(sql1, sql2);
