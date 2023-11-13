@@ -57,7 +57,7 @@ public class GeneratorDataTool {
 
     public static List<?> generateData01(){
         List<Tuple4<Integer, String, String, Timestamp>> data = new ArrayList<>();
-        data.add(new Tuple4<>(1, "-0.5486", "Hi", Timestamp.valueOf("1970-01-01 00:00:00.001")));
+        data.add(new Tuple4<>(1, "-0.5486", "Hi", Timestamp.valueOf("1970-01-02 00:00:00.001")));
         data.add(new Tuple4<>(1, "-0.5473", "Hello", Timestamp.valueOf("1970-01-01 00:00:00.002")));
         data.add(new Tuple4<>(2, "-0.0574", "Hello world", Timestamp.valueOf("1970-01-01 00:00:00.003")));
         data.add(new Tuple4<>(2, "-0.0679", "Hello world, how are you?", Timestamp.valueOf("1970-01-01 00:00:00.004")));
@@ -68,6 +68,28 @@ public class GeneratorDataTool {
 
         return data;
     }
+
+    public static List<?> generateData03(){
+        List<Tuple4<Integer, String, String, Long>> data = new ArrayList<>();
+        data.add(new Tuple4<>(1, "-0.5486", "Hi", 1697593647540L));
+        data.add(new Tuple4<>(1, "-0.5473", "Hello", 1697592645885L));
+
+        return data;
+    }
+
+    public static List<?> generateData04(){
+        List<Tuple4<Integer, String, String, Long>> data = new ArrayList<>();
+        data.add(new Tuple4<>(1, "-0.5486", "[{\"uname\":\"lcy61\",\"addr\":\"shanghai\",\"dt\":\"2023-09-19\",\"hr\":\"23\"},{\"uname\":\"lcy52\",\"addr\":\"shenzhen\",\"dt\":\"2023-09-19\",\"hr\":\"23\"},{\"uname\":\"lcy53\",\"addr\":\"beijing\",\"dt\":\"2023-09-19\",\"hr\":\"23\"}]", 1697593647540L));
+        return data;
+    }
+
+    public static List<?> generateData05(){
+        List<Tuple4<Integer, String, String, Long>> data = new ArrayList<>();
+        data.add(new Tuple4<>(1, "-0.5486", "lcy61:shanghai:2023-09-19,lcy62:shanghai02:2023-10-19,lcy63:shanghai03:2023-11-19", 1697593647540L));
+
+        return data;
+    }
+
 
     public static void generatorDataStream(GeneratorDataInfo dataInfo) {
 

@@ -46,6 +46,7 @@ public abstract class FlinkLocalRunHandler {
                 .build();
 
         tEnv = StreamTableEnvironment.create(env, tableEnvSettings);
+
         configEnv(env, tEnv);
     }
 
