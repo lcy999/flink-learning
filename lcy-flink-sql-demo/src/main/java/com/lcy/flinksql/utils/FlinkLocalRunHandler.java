@@ -1,9 +1,13 @@
 package com.lcy.flinksql.utils;
 
+import com.lcy.flinksql.source.AutoCarSource;
 import lombok.Builder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.flink.api.java.tuple.Tuple4;
+import org.apache.flink.calcite.shaded.com.google.common.collect.Lists;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.SqlParserException;
@@ -11,6 +15,7 @@ import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.table.expressions.Expression;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -48,6 +53,19 @@ public abstract class FlinkLocalRunHandler {
         tEnv = StreamTableEnvironment.create(env, tableEnvSettings);
 
         configEnv(env, tEnv);
+    }
+
+    public FlinkLocalRunHandler(Configuration configuration, boolean isAutoCar){
+        this(configuration);
+        if(isAutoCar){
+            DataStreamSource<Tuple4<Integer, Integer, Double, Long>> tuple4DataStreamSource = env.addSource(AutoCarSource.create(2));
+            ArrayList<String> fieldNames = Lists.newArrayList("id", "speed", "distance", "time");
+            List<Expression> expressions = fieldNames.stream().map(fname -> $(fname)).collect(Collectors.toList());
+            Expression[] fieldNamesExpression = expressions.toArray(new Expression[fieldNames.size()]);
+            tEnv.registerTable("autoCar" , tEnv.fromDataStream(tuple4DataStreamSource, fieldNamesExpression));
+
+        }
+
     }
 
     public void configEnv(StreamExecutionEnvironment env,StreamTableEnvironment tEnv){

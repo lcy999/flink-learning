@@ -1,8 +1,10 @@
 package com.lcy.flinksql.demo;
 
+import com.lcy.flinksql.reporter.PayPrometheusPushGatewayReporter;
 import com.lcy.flinksql.utils.FlinkLocalRunHandler;
 import com.lcy.flinksql.utils.GeneratorDataTool;
 import org.apache.flink.calcite.shaded.com.google.common.collect.Lists;
+import org.apache.flink.configuration.Configuration;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -13,7 +15,11 @@ import java.util.concurrent.ExecutionException;
  **/
 public class TestCollection2PrintForHandler {
     public static void main(String[] args) throws ExecutionException, InterruptedException {
-        FlinkLocalRunHandler flinkLocalRunHandler = new FlinkLocalRunHandler() {
+        Configuration conf = new Configuration();
+        conf.setString("metrics.reporter.mylog.class", PayPrometheusPushGatewayReporter.class.getName());
+        conf.setString("metrics.reporter.mylog.interval","5 SECONDS");
+
+        FlinkLocalRunHandler flinkLocalRunHandler = new FlinkLocalRunHandler(conf) {
 
             @Override
             public List<GeneratorDataInfo> generateData() {
