@@ -71,8 +71,8 @@ public class GeneratorDataTool {
 
     public static List<?> generateData03(){
         List<Tuple4<Integer, String, String, Long>> data = new ArrayList<>();
-        data.add(new Tuple4<>(1, "-0.5486", "Hi", 1697593647540L));
-        data.add(new Tuple4<>(1, "-0.5473", "Hello", 1697592645885L));
+        data.add(new Tuple4<>(1, "-0.5486", "Hi", 1692932622184L));
+        data.add(new Tuple4<>(1, "-0.5473", "Hello", 1703903982000L));
 
         return data;
     }

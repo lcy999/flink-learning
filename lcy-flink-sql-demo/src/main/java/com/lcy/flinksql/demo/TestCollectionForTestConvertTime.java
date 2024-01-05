@@ -42,8 +42,10 @@ public class TestCollectionForTestConvertTime {
                         " , TO_TIMESTAMP(DATE_FORMAT(FROM_UNIXTIME(ts/1000),'yyyy-MM-dd HH:mm:ss'))" +
                         " , DATE_FORMAT(FROM_UNIXTIME(ts/1000), 'yyyy-MM-dd')" +
                         " , DATE_FORMAT(CURRENT_TIMESTAMP, 'yyyyMMdd000000')" +
-                        " , 999 " +
-                        " FROM T01 where '2023-11-15 16:20:00 596' < '2023-11-16 00:00:00' and 100 % 10=0";
+                        " , TIMESTAMPDIFF(DAY,TO_TIMESTAMP_LTZ(ts,3),CURRENT_TIMESTAMP) " +
+                        " FROM T01 where '2023-11-15 16:20:00 596' < '2023-11-16 00:00:00' " +
+                        "" +
+                        "";
 
                 return Lists.newArrayList(sql1, sql2);
             }
