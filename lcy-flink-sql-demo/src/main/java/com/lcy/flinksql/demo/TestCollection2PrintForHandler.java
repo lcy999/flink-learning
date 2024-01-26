@@ -1,10 +1,8 @@
 package com.lcy.flinksql.demo;
 
-import com.lcy.flinksql.reporter.PayPrometheusPushGatewayReporter;
 import com.lcy.flinksql.utils.FlinkLocalRunHandler;
 import com.lcy.flinksql.utils.GeneratorDataTool;
 import org.apache.flink.calcite.shaded.com.google.common.collect.Lists;
-import org.apache.flink.configuration.Configuration;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -15,11 +13,8 @@ import java.util.concurrent.ExecutionException;
  **/
 public class TestCollection2PrintForHandler {
     public static void main(String[] args) throws ExecutionException, InterruptedException {
-        Configuration conf = new Configuration();
-        conf.setString("metrics.reporter.mylog.class", PayPrometheusPushGatewayReporter.class.getName());
-        conf.setString("metrics.reporter.mylog.interval","5 SECONDS");
 
-        FlinkLocalRunHandler flinkLocalRunHandler = new FlinkLocalRunHandler(conf) {
+        FlinkLocalRunHandler flinkLocalRunHandler = new FlinkLocalRunHandler() {
 
             @Override
             public List<GeneratorDataInfo> generateData() {
@@ -39,14 +34,17 @@ public class TestCollection2PrintForHandler {
                 String sql1 = "CREATE TABLE upsertSink ("
                         + "  id INT,"
                         + "  num DECIMAL(10,4),"
-                        + "  ts TIMESTAMP(3)"
+                        + "  ts TIMESTAMP(3),"
+                        + "  content STRING"
                         + ") WITH ("
                         + "  'connector'='print'"
                         + ")";
 
                 String sql2 = "INSERT INTO upsertSink SELECT id " +
                         " , CAST(avg(CAST(SPLIT_INDEX(item_emb,',',0) AS DECIMAL(10,4))) AS DECIMAL(10,4)) as item_emb" +
-                        " , max(ts) FROM T02 WHERE id IN (1,2) group by id";
+                        " , max(ts) " +
+                        ", distinct 'abc'" +
+                        "FROM T02 WHERE id IN (1,2) group by id";
 
                 return Lists.newArrayList(sql1, sql2);
             }
