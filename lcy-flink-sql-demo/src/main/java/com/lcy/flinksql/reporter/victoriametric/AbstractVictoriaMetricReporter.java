@@ -18,12 +18,7 @@
 
 package com.lcy.flinksql.reporter.victoriametric;
 
-import org.apache.flink.metrics.Counter;
-import org.apache.flink.metrics.Gauge;
-import org.apache.flink.metrics.Histogram;
-import org.apache.flink.metrics.Meter;
-import org.apache.flink.metrics.Metric;
-import org.apache.flink.metrics.MetricGroup;
+import org.apache.flink.metrics.*;
 import org.apache.flink.metrics.reporter.MetricReporter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
