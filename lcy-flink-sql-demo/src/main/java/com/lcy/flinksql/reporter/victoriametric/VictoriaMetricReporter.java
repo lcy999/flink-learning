@@ -40,10 +40,12 @@ import static org.apache.flink.metrics.prometheus.PrometheusPushGatewayReporterO
         factoryClassName = "com.lcy.flinksql.reporter.victoriametric.VictoriaMetricReporterFactory")
 public class VictoriaMetricReporter extends AbstractVictoriaMetricReporter<VictoriaMetricInfo> implements Scheduled {
 
-    private String database;
-    private String retentionPolicy;
-    private InfluxDB.ConsistencyLevel consistency;
-    private InfluxDB influxDB;
+    private String jobName;
+    private String vmImportUrl;
+    private Map<String, String> groupingKey;
+    private boolean isFilterMetric;
+    private String filterMetricUrl;
+
 
     public VictoriaMetricReporter() {
         super(new VictoriaMetricInfoProvider());
@@ -54,57 +56,49 @@ public class VictoriaMetricReporter extends AbstractVictoriaMetricReporter<Victo
         String host = metricConfig.getString(HOST.key(), HOST.defaultValue());
         Integer port = metricConfig.getInteger(PORT.key(), PORT.defaultValue());
 
-        String configuredJobName = metricConfig.getString(JOB_NAME.key(), JOB_NAME.defaultValue());
-        boolean randomSuffix =
-                metricConfig.getBoolean(
-                        RANDOM_JOB_NAME_SUFFIX.key(), RANDOM_JOB_NAME_SUFFIX.defaultValue());
-
-        Map<String, String> groupingKey =
-                parseGroupingKey(
-                        metricConfig.getString(GROUPING_KEY.key(), GROUPING_KEY.defaultValue()));
-
         if (host == null || host.isEmpty() || port < 1) {
             throw new IllegalArgumentException(
                     "Invalid host/port configuration. Host: " + host + " Port: " + port);
         }
 
-        String jobName = configuredJobName;
+        String vmUrlFormat = "http://%s:%s/api/v1/import/prometheus";
+        vmImportUrl = String.format(vmUrlFormat,host, port);
+
+        String configuredJobName = metricConfig.getString(JOB_NAME.key(), JOB_NAME.defaultValue());
+        boolean randomSuffix =
+                metricConfig.getBoolean(
+                        RANDOM_JOB_NAME_SUFFIX.key(), RANDOM_JOB_NAME_SUFFIX.defaultValue());
+
+        jobName = configuredJobName;
         if (randomSuffix) {
             jobName = configuredJobName + new AbstractID();
         }
 
+        groupingKey = parseGroupingKey(
+                metricConfig.getString(GROUPING_KEY.key(), GROUPING_KEY.defaultValue()));
+
+        isFilterMetric = metricConfig.getBoolean(FILTER_METRIC.key(), FILTER_METRIC.defaultValue());
+        filterMetricUrl = metricConfig.getString(FILTER_METRIC_URL.key(), FILTER_METRIC_URL.defaultValue());
+
 
         log.info(
-                "Configured InfluxDBReporter with {host:{}, port:{}, db:{}, retentionPolicy:{} and consistency:{}}",
-                host,
-                port,
-                database,
-                retentionPolicy,
-                consistency.name());
+                "Configured VM Reporter with {host:{}, port:{}, jobName:{}, groupingKey:{},isFilterMetric:{}, filterMetricUrl:{} }",
+                host
+                ,port
+                ,jobName
+                ,groupingKey
+                ,isFilterMetric
+                ,filterMetricUrl
+        );
     }
 
     @Override
     public void close() {
-        if (influxDB != null) {
-            influxDB.close();
-            influxDB = null;
-        }
+
     }
 
     @Override
     public void report() {
-        BatchPoints report = buildReport();
-        if (report != null) {
-            influxDB.write(report);
-        }
-    }
-
-    @Nullable
-    private BatchPoints buildReport() {
-        Instant timestamp = Instant.now();
-        BatchPoints.Builder report = BatchPoints.database(database);
-        report.retentionPolicy(retentionPolicy);
-        report.consistency(consistency);
         try {
             for (Map.Entry<Gauge<?>, VictoriaMetricInfo> entry : gauges.entrySet()) {
                 report.point(MetricMapper.map(entry.getValue(), timestamp, entry.getKey()));
@@ -126,8 +120,8 @@ public class VictoriaMetricReporter extends AbstractVictoriaMetricReporter<Victo
             // report next time
             return null;
         }
-        return report.build();
     }
+
 
     @VisibleForTesting
     private Map<String, String> parseGroupingKey(final String groupingKeyConfig) {
