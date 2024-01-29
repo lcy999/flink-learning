@@ -1,4 +1,4 @@
-package com.lcy.flinksql.reporter;
+package com.lcy.flinksql.reporter.other;
 
 import org.apache.flink.annotation.VisibleForTesting;
 import org.apache.flink.metrics.MetricConfig;
@@ -27,7 +27,7 @@ import static org.apache.flink.metrics.prometheus.PrometheusPushGatewayReporterO
  * @date: 2023/12/29
  **/
 @InterceptInstantiationViaReflection(
-        reporterClassName = "com.lcy.flinksql.reporter.PayPrometheusPushGatewayReporter")
+        reporterClassName = "com.lcy.flinksql.reporter.other.PayPrometheusPushGatewayReporter")
 public class PayPrometheusPushGatewayReporterFactory implements MetricReporterFactory {
 
     private static final Logger LOG =

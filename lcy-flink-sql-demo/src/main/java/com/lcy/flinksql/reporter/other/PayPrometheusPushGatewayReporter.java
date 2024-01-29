@@ -1,4 +1,4 @@
-package com.lcy.flinksql.reporter;
+package com.lcy.flinksql.reporter.other;
 
 import io.prometheus.client.Collector;
 import io.prometheus.client.CollectorRegistry;
@@ -24,7 +24,7 @@ import java.util.Map;
 @PublicEvolving
 @InstantiateViaFactory(
         factoryClassName =
-                "com.lcy.flinksql.reporter.PayPrometheusPushGatewayReporterFactory")
+                "com.lcy.flinksql.reporter.other.PayPrometheusPushGatewayReporterFactory")
 public class PayPrometheusPushGatewayReporter extends AbstractPrometheusReporter implements Scheduled {
 
     private final PushGateway pushGateway;

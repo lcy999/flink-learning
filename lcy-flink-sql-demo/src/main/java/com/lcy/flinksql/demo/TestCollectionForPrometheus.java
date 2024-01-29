@@ -1,6 +1,6 @@
 package com.lcy.flinksql.demo;
 
-import com.lcy.flinksql.reporter.PayPrometheusPushGatewayReporter;
+import com.lcy.flinksql.reporter.other.PayPrometheusPushGatewayReporter;
 import com.lcy.flinksql.utils.FlinkLocalRunHandler;
 import org.apache.flink.calcite.shaded.com.google.common.collect.Lists;
 import org.apache.flink.configuration.Configuration;
