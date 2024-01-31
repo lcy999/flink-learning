@@ -18,22 +18,25 @@
 
 package com.lcy.flinksql.reporter.victoriametric;
 
+import com.lcy.flinksql.utils.HttpClientUtil;
 import org.apache.flink.annotation.VisibleForTesting;
-import org.apache.flink.metrics.*;
+import org.apache.flink.metrics.Counter;
+import org.apache.flink.metrics.Gauge;
+import org.apache.flink.metrics.Histogram;
+import org.apache.flink.metrics.Meter;
+import org.apache.flink.metrics.Metric;
+import org.apache.flink.metrics.MetricConfig;
 import org.apache.flink.metrics.reporter.InstantiateViaFactory;
 import org.apache.flink.metrics.reporter.MetricReporter;
 import org.apache.flink.metrics.reporter.Scheduled;
 import org.apache.flink.util.AbstractID;
 import org.apache.flink.util.StringUtils;
 
-import javax.annotation.Nullable;
-import java.time.Instant;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import static com.lcy.flinksql.reporter.victoriametric.VictoriaMetricReporterOptions.*;
-import static org.apache.flink.metrics.prometheus.PrometheusPushGatewayReporterOptions.GROUPING_KEY;
-import static org.apache.flink.metrics.prometheus.PrometheusPushGatewayReporterOptions.JOB_NAME;
-import static org.apache.flink.metrics.prometheus.PrometheusPushGatewayReporterOptions.RANDOM_JOB_NAME_SUFFIX;
 
 /** {@link MetricReporter} that exports {@link Metric Metrics} via InfluxDB. */
 @InstantiateViaFactory(
@@ -45,6 +48,7 @@ public class VictoriaMetricReporter extends AbstractVictoriaMetricReporter<Victo
     private Map<String, String> groupingKey;
     private boolean isFilterMetric;
     private String filterMetricUrl;
+    private String groupKeyString;
 
 
     public VictoriaMetricReporter() {
@@ -76,6 +80,18 @@ public class VictoriaMetricReporter extends AbstractVictoriaMetricReporter<Victo
 
         groupingKey = parseGroupingKey(
                 metricConfig.getString(GROUPING_KEY.key(), GROUPING_KEY.defaultValue()));
+        StringBuilder groupKeyBuilder=new StringBuilder();
+        Object[] keyGrouping = groupingKey.keySet().toArray();
+        for(int i=0;i < keyGrouping.length; i++){
+            String lableKey = (String) keyGrouping[i];
+            String lableValue= groupingKey.get(keyGrouping[i]);
+            if(i== keyGrouping.length-1){
+                groupKeyBuilder.append(String.format("%s=\"%s\"",lableKey, lableValue));
+            }else{
+                groupKeyBuilder.append(String.format("%s=\"%s\",",lableKey, lableValue));
+            }
+        }
+        groupKeyString = groupKeyBuilder.toString();
 
         isFilterMetric = metricConfig.getBoolean(FILTER_METRIC.key(), FILTER_METRIC.defaultValue());
         filterMetricUrl = metricConfig.getString(FILTER_METRIC_URL.key(), FILTER_METRIC_URL.defaultValue());
@@ -100,38 +116,92 @@ public class VictoriaMetricReporter extends AbstractVictoriaMetricReporter<Victo
     @Override
     public void report() {
         try {
+            StringBuilder metricBuilder= new StringBuilder();
+
             for (Map.Entry<Gauge<?>, VictoriaMetricInfo> entry : gauges.entrySet()) {
-                report.point(MetricMapper.map(entry.getValue(), timestamp, entry.getKey()));
+                metricBuilder.append(buildVMPushMetric(entry.getKey(), entry.getValue())+"\n");
             }
 
             for (Map.Entry<Counter, VictoriaMetricInfo> entry : counters.entrySet()) {
-                report.point(MetricMapper.map(entry.getValue(), timestamp, entry.getKey()));
+                metricBuilder.append(buildVMPushMetric(entry.getKey(), entry.getValue())+"\n");
             }
 
             for (Map.Entry<Histogram, VictoriaMetricInfo> entry : histograms.entrySet()) {
-                report.point(MetricMapper.map(entry.getValue(), timestamp, entry.getKey()));
+                metricBuilder.append(buildVMPushMetric(entry.getKey(), entry.getValue())+"\n");
             }
 
             for (Map.Entry<Meter, VictoriaMetricInfo> entry : meters.entrySet()) {
-                report.point(MetricMapper.map(entry.getValue(), timestamp, entry.getKey()));
+                metricBuilder.append(buildVMPushMetric(entry.getKey(), entry.getValue())+"\n");
             }
-        } catch (ConcurrentModificationException | NoSuchElementException e) {
-            // ignore - may happen when metrics are concurrently added or removed
-            // report next time
-            return null;
+
+            HttpClientUtil.postJson(vmImportUrl, metricBuilder.toString(), null);
+        } catch (Exception e) {
+            log.warn(
+                    "Failed to push metrics to VictoriaMetric Server with jobName {}, groupingKey {}.",
+                    jobName,
+                    groupingKey,
+                    e);
         }
     }
 
+    @VisibleForTesting
+    String buildVMPushMetric(Metric metric, VictoriaMetricInfo vmMetricInfo){
+        StringBuilder lableBuilder=new StringBuilder();
+
+        Object[] keyTags = vmMetricInfo.getTags().keySet().toArray();
+        for(int i=0; i< keyTags.length; i++){
+            String lableKey = (String) keyTags[i];
+            String lableValue = vmMetricInfo.getTags().get(lableKey);
+            if(i== keyTags.length-1){
+                lableBuilder.append(String.format("%s=\"%s\"",lableKey, lableValue));
+            }else{
+                lableBuilder.append(String.format("%s=\"%s\",",lableKey, lableValue));
+            }
+        }
+
+        if(groupKeyString.length() >0){
+            lableBuilder.append(","+groupKeyString);
+        }
+
+        lableBuilder.append(","+ String.format("job=\"%s\"", jobName));
+
+        String lableString= lableBuilder.toString();
+        String metricValue = getMetricValue(metric);
+
+        return String.format("%s{%s} %s", vmMetricInfo.getName(), lableString, metricValue);
+    }
+
+    public String getMetricValue(Object metric) {
+        Object value= null;
+        if(metric instanceof Gauge){
+            value = ((Gauge)metric).getValue();
+        }else if(metric instanceof Counter){
+            Counter counter= (Counter) metric;
+            value= counter.getCount();
+        }else if(metric instanceof Meter){
+            Meter meter= (Meter) metric;
+            value= meter.getRate();
+        }
+
+        if (value == null) {
+            log.info("metric {} is null-valued, defaulting to 0.", metric);
+            value= "0";
+        }
+        return String.valueOf(value);
+    }
+
+
+
 
     @VisibleForTesting
-    private Map<String, String> parseGroupingKey(final String groupingKeyConfig) {
+    Map<String, String> parseGroupingKey(final String groupingKeyConfig) {
         if (!groupingKeyConfig.isEmpty()) {
             Map<String, String> groupingKey = new HashMap<>();
             String[] kvs = groupingKeyConfig.split(";");
             for (String kv : kvs) {
                 int idx = kv.indexOf("=");
                 if (idx < 0) {
-                    log.warn("Invalid prometheusPushGateway groupingKey:{}, will be ignored", kv);
+                    log.warn("Invalid victoriaMetric groupingKey:{}, will be ignored", kv);
                     continue;
                 }
 
@@ -154,7 +224,4 @@ public class VictoriaMetricReporter extends AbstractVictoriaMetricReporter<Victo
         return Collections.emptyMap();
     }
 
-    private static boolean isValidHost(String host) {
-        return host != null && !host.isEmpty();
-    }
 }

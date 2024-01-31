@@ -23,21 +23,20 @@ import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.ConfigOptions;
 import org.apache.flink.configuration.description.Description;
 import org.apache.flink.configuration.description.TextElement;
-import org.apache.flink.metrics.prometheus.PrometheusPushGatewayReporter;
 
-/** Config options for the {@link PrometheusPushGatewayReporter}. */
+/** Config options for the {@link VictoriaMetricReporter}. */
 @Documentation.SuffixOption
 public class VictoriaMetricReporterOptions {
 
     public static final ConfigOption<String> HOST =
             ConfigOptions.key("host")
                     .noDefaultValue()
-                    .withDescription("The PushGateway server host.");
+                    .withDescription("The VictoriaMetric server host.");
 
     public static final ConfigOption<Integer> PORT =
             ConfigOptions.key("port")
                     .defaultValue(-1)
-                    .withDescription("The PushGateway server port.");
+                    .withDescription("The VictoriaMetric server port.");
 
     public static final ConfigOption<String> JOB_NAME =
             ConfigOptions.key("jobName")
@@ -66,5 +65,11 @@ public class VictoriaMetricReporterOptions {
                     .defaultValue(false)
                     .withDescription(
                             "Specifies whether to filter metric");
+
+    public static final ConfigOption<Boolean> RANDOM_JOB_NAME_SUFFIX =
+            ConfigOptions.key("randomJobNameSuffix")
+                    .defaultValue(true)
+                    .withDescription(
+                            "Specifies whether a random suffix should be appended to the job name.");
 
 }
