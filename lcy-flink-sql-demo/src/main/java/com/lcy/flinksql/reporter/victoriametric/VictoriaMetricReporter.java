@@ -18,11 +18,14 @@
 
 package com.lcy.flinksql.reporter.victoriametric;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.lcy.flinksql.utils.HttpClientUtil;
 import org.apache.flink.annotation.VisibleForTesting;
+import org.apache.flink.metrics.CharacterFilter;
 import org.apache.flink.metrics.Counter;
 import org.apache.flink.metrics.Gauge;
-import org.apache.flink.metrics.Histogram;
 import org.apache.flink.metrics.Meter;
 import org.apache.flink.metrics.Metric;
 import org.apache.flink.metrics.MetricConfig;
@@ -30,13 +33,24 @@ import org.apache.flink.metrics.reporter.InstantiateViaFactory;
 import org.apache.flink.metrics.reporter.MetricReporter;
 import org.apache.flink.metrics.reporter.Scheduled;
 import org.apache.flink.util.AbstractID;
+import org.apache.flink.util.Preconditions;
 import org.apache.flink.util.StringUtils;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 
-import static com.lcy.flinksql.reporter.victoriametric.VictoriaMetricReporterOptions.*;
+import static com.lcy.flinksql.reporter.victoriametric.VictoriaMetricReporterOptions.FILTER_LABEL_VALUE_CHARACTER;
+import static com.lcy.flinksql.reporter.victoriametric.VictoriaMetricReporterOptions.FILTER_METRIC;
+import static com.lcy.flinksql.reporter.victoriametric.VictoriaMetricReporterOptions.FILTER_METRIC_URL;
+import static com.lcy.flinksql.reporter.victoriametric.VictoriaMetricReporterOptions.GROUPING_KEY;
+import static com.lcy.flinksql.reporter.victoriametric.VictoriaMetricReporterOptions.HOST;
+import static com.lcy.flinksql.reporter.victoriametric.VictoriaMetricReporterOptions.JOB_NAME;
+import static com.lcy.flinksql.reporter.victoriametric.VictoriaMetricReporterOptions.METRIC_NAME_SUFFIX;
+import static com.lcy.flinksql.reporter.victoriametric.VictoriaMetricReporterOptions.PORT;
+import static com.lcy.flinksql.reporter.victoriametric.VictoriaMetricReporterOptions.RANDOM_JOB_NAME_SUFFIX;
+import static com.lcy.flinksql.reporter.victoriametric.VictoriaMetricReporterOptions.REPORT_COUNT_FOR_REQUEST_FILTER_INFO;
 
 /** {@link MetricReporter} that exports {@link Metric Metrics} via InfluxDB. */
 @InstantiateViaFactory(
@@ -49,6 +63,23 @@ public class VictoriaMetricReporter extends AbstractVictoriaMetricReporter<Victo
     private boolean isFilterMetric;
     private String filterMetricUrl;
     private String groupKeyString;
+    private String metricNameSuffix;
+    private int currentReporterCounterForFilterInfo= 0;
+
+    private static final Pattern UNALLOWED_CHAR_PATTERN = Pattern.compile("[^a-zA-Z0-9:_]");
+    private static final CharacterFilter CHARACTER_FILTER =
+            new CharacterFilter() {
+                @Override
+                public String filterCharacters(String input) {
+                    return replaceInvalidChars(input);
+                }
+            };
+
+    private static final char SCOPE_SEPARATOR = '_';
+    private static final String SCOPE_PREFIX = "flink" + SCOPE_SEPARATOR;
+    private boolean filterLableValueCharacter;
+    private int reportCountForRequestFilterInfo;
+    private FilterMetricInfo filterMetricInfo= new FilterMetricInfo();
 
 
     public VictoriaMetricReporter() {
@@ -95,17 +126,30 @@ public class VictoriaMetricReporter extends AbstractVictoriaMetricReporter<Victo
 
         isFilterMetric = metricConfig.getBoolean(FILTER_METRIC.key(), FILTER_METRIC.defaultValue());
         filterMetricUrl = metricConfig.getString(FILTER_METRIC_URL.key(), FILTER_METRIC_URL.defaultValue());
-
+        metricNameSuffix = metricConfig.getString(METRIC_NAME_SUFFIX.key(), METRIC_NAME_SUFFIX.defaultValue());
+        filterLableValueCharacter = metricConfig.getBoolean(FILTER_LABEL_VALUE_CHARACTER.key(), FILTER_LABEL_VALUE_CHARACTER.defaultValue());
+        reportCountForRequestFilterInfo = metricConfig.getInteger(REPORT_COUNT_FOR_REQUEST_FILTER_INFO.key(), REPORT_COUNT_FOR_REQUEST_FILTER_INFO.defaultValue());
 
         log.info(
-                "Configured VM Reporter with {host:{}, port:{}, jobName:{}, groupingKey:{},isFilterMetric:{}, filterMetricUrl:{} }",
+                "Configured VM Reporter with {host:{}, port:{}, jobName:{}" +
+                        ", groupingKey:{},isFilterMetric:{}, filterMetricUrl:{},metricNameSuffix:{} " +
+                        ",filterLableValueCharacter:{},reportCountForRequestFilterInfo:{} }",
                 host
                 ,port
                 ,jobName
                 ,groupingKey
                 ,isFilterMetric
                 ,filterMetricUrl
+                ,metricNameSuffix
+                ,filterLableValueCharacter
+                ,reportCountForRequestFilterInfo
         );
+
+        if(isFilterMetric){
+            filterMetricUrl= Preconditions.checkNotNull(filterMetricUrl);
+            requestFilterMetricInfo();
+        }
+
     }
 
     @Override
@@ -118,23 +162,34 @@ public class VictoriaMetricReporter extends AbstractVictoriaMetricReporter<Victo
         try {
             StringBuilder metricBuilder= new StringBuilder();
 
-            for (Map.Entry<Gauge<?>, VictoriaMetricInfo> entry : gauges.entrySet()) {
-                metricBuilder.append(buildVMPushMetric(entry.getKey(), entry.getValue())+"\n");
+            Map<Metric, VictoriaMetricInfo> reportMetricData = getReportMetricData();
+
+            int reportMetricNum=0;
+            for (Map.Entry<Metric, VictoriaMetricInfo> entry : reportMetricData.entrySet()) {
+                Metric metric = entry.getKey();
+                VictoriaMetricInfo victoriaMetricInfo = entry.getValue();
+                String fullMetricName = getFullMetricName(victoriaMetricInfo.getName());
+                if(filterMetricInfo.filterMetric(fullMetricName)){
+                    metricBuilder.append(buildVMPushMetric(metric, victoriaMetricInfo)+"\n");
+                    reportMetricNum++;
+                }
             }
 
-            for (Map.Entry<Counter, VictoriaMetricInfo> entry : counters.entrySet()) {
-                metricBuilder.append(buildVMPushMetric(entry.getKey(), entry.getValue())+"\n");
+            if(reportMetricNum==0){
+                log.warn("Report metric num is zero, the filer reuqest url:{}", filterMetricUrl);
+            }else{
+                HttpClientUtil.postJson(vmImportUrl, metricBuilder.toString(), null);
             }
 
-            for (Map.Entry<Histogram, VictoriaMetricInfo> entry : histograms.entrySet()) {
-                metricBuilder.append(buildVMPushMetric(entry.getKey(), entry.getValue())+"\n");
+            if(isFilterMetric){
+                currentReporterCounterForFilterInfo++;
+
+                if(currentReporterCounterForFilterInfo> reportCountForRequestFilterInfo){
+                    currentReporterCounterForFilterInfo= 0;
+                    requestFilterMetricInfo();
+                }
             }
 
-            for (Map.Entry<Meter, VictoriaMetricInfo> entry : meters.entrySet()) {
-                metricBuilder.append(buildVMPushMetric(entry.getKey(), entry.getValue())+"\n");
-            }
-
-            HttpClientUtil.postJson(vmImportUrl, metricBuilder.toString(), null);
         } catch (Exception e) {
             log.warn(
                     "Failed to push metrics to VictoriaMetric Server with jobName {}, groupingKey {}.",
@@ -152,6 +207,12 @@ public class VictoriaMetricReporter extends AbstractVictoriaMetricReporter<Victo
         for(int i=0; i< keyTags.length; i++){
             String lableKey = (String) keyTags[i];
             String lableValue = vmMetricInfo.getTags().get(lableKey);
+
+            lableKey= CHARACTER_FILTER.filterCharacters(lableKey);
+            if(filterLableValueCharacter){
+                lableValue= CHARACTER_FILTER.filterCharacters(lableValue);
+            }
+
             if(i== keyTags.length-1){
                 lableBuilder.append(String.format("%s=\"%s\"",lableKey, lableValue));
             }else{
@@ -168,10 +229,19 @@ public class VictoriaMetricReporter extends AbstractVictoriaMetricReporter<Victo
         String lableString= lableBuilder.toString();
         String metricValue = getMetricValue(metric);
 
-        return String.format("%s{%s} %s", vmMetricInfo.getName(), lableString, metricValue);
+        String fullMetricName = getFullMetricName(vmMetricInfo.getName());
+
+        return String.format("%s{%s} %s", fullMetricName, lableString, metricValue);
     }
 
-    public String getMetricValue(Object metric) {
+    private String getFullMetricName(String originMetricName){
+        String fullMetricName=SCOPE_PREFIX+CHARACTER_FILTER.filterCharacters(originMetricName) +metricNameSuffix;
+        return fullMetricName;
+    }
+
+
+
+    public String getMetricValue(Metric metric) {
         Object value= null;
         if(metric instanceof Gauge){
             value = ((Gauge)metric).getValue();
@@ -189,9 +259,6 @@ public class VictoriaMetricReporter extends AbstractVictoriaMetricReporter<Victo
         }
         return String.valueOf(value);
     }
-
-
-
 
     @VisibleForTesting
     Map<String, String> parseGroupingKey(final String groupingKeyConfig) {
@@ -222,6 +289,43 @@ public class VictoriaMetricReporter extends AbstractVictoriaMetricReporter<Victo
         }
 
         return Collections.emptyMap();
+    }
+
+    @VisibleForTesting
+    static String replaceInvalidChars(final String input) {
+        // Only [a-zA-Z0-9:_] are valid in metric names, any other characters should be sanitized to
+        // an underscore.
+        return UNALLOWED_CHAR_PATTERN.matcher(input).replaceAll("_");
+    }
+
+    private void requestFilterMetricInfo(){
+        String filterMetricJson = HttpClientUtil.postJsonWithParam(filterMetricUrl, null, null);
+        if(StringUtils.isNullOrWhitespaceOnly(filterMetricJson)){
+            log.error("Failed when request filter http: "+filterMetricUrl);
+            return;
+        }
+
+        try{
+            JSONArray jaFilterMetrics = JSON.parseArray(filterMetricJson);
+            if(jaFilterMetrics.size()==0){
+                log.warn("Filter metric is empty, the http:{}", filterMetricUrl);
+                return;
+            }
+
+            for(int i=0; i<jaFilterMetrics.size(); i++){
+                JSONObject joFilterMetric = jaFilterMetrics.getJSONObject(i);
+                String useType = joFilterMetric.getString("useType");
+                String metricName = joFilterMetric.getString("metricName");
+                if("INCLUDE_METRIC".equals(useType)){
+                    filterMetricInfo.addIncludeMetric(metricName);
+                }else if("EXCLUDE_METRIC".equals(useType)){
+                    filterMetricInfo.addExcludeMetric(metricName);
+                }
+            }
+        }catch (Exception e){
+            log.error("Failed when parse filter information with the http:{}, {}",filterMetricUrl, e);
+        }
+
     }
 
 }

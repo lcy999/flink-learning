@@ -22,6 +22,7 @@ import org.apache.flink.annotation.docs.Documentation;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.ConfigOptions;
 import org.apache.flink.configuration.description.Description;
+import org.apache.flink.configuration.description.LinkElement;
 import org.apache.flink.configuration.description.TextElement;
 
 /** Config options for the {@link VictoriaMetricReporter}. */
@@ -60,6 +61,11 @@ public class VictoriaMetricReporterOptions {
                     .noDefaultValue()
                     .withDescription("Request the Url interface to obtain information on filtering metrics.");
 
+    public static final ConfigOption<Integer> REPORT_COUNT_FOR_REQUEST_FILTER_INFO =
+            ConfigOptions.key("reportCountForRequestFilterInfo")
+                    .defaultValue(-1)
+                    .withDescription("Specifies the number of reports, and request filtered information when the number of reports reaches.");
+
     public static final ConfigOption<Boolean> FILTER_METRIC =
             ConfigOptions.key("filterMetric")
                     .defaultValue(false)
@@ -71,5 +77,29 @@ public class VictoriaMetricReporterOptions {
                     .defaultValue(true)
                     .withDescription(
                             "Specifies whether a random suffix should be appended to the job name.");
+
+    public static final ConfigOption<String> METRIC_NAME_SUFFIX =
+            ConfigOptions.key("metricNameSuffix")
+                    .defaultValue("")
+                    .withDescription(
+                            "Specifies whether a suffix should be appended to the metric name.");
+
+    public static final ConfigOption<Boolean> FILTER_LABEL_VALUE_CHARACTER =
+            ConfigOptions.key("filterLabelValueCharacters")
+                    .defaultValue(true)
+                    .withDescription(
+                            Description.builder()
+                                    .text(
+                                            "Specifies whether to filter label value characters."
+                                                    + " If enabled, all characters not matching [a-zA-Z0-9:_] will be removed,"
+                                                    + " otherwise no characters will be removed."
+                                                    + " Before disabling this option please ensure that your"
+                                                    + " label values meet the %s.",
+                                            LinkElement.link(
+                                                    "https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels",
+                                                    "Prometheus requirements"))
+                                    .build());
+
+
 
 }

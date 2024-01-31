@@ -164,6 +164,12 @@
             <version>29.0-jre</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
+            <version>1.2.83</version>
+        </dependency>
+
     </dependencies>
 
 </project>

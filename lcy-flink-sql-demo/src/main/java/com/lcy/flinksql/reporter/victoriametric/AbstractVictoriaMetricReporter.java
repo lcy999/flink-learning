@@ -85,4 +85,25 @@ abstract class AbstractVictoriaMetricReporter<MetricInfo> implements MetricRepor
             }
         }
     }
+
+    protected Map<Metric, MetricInfo> getReportMetricData(){
+        Map<Metric, MetricInfo> data= new HashMap<>();
+        for (Map.Entry<Gauge<?>, MetricInfo> entry : gauges.entrySet()) {
+            data.put(entry.getKey(), entry.getValue());
+        }
+
+        for (Map.Entry<Counter, MetricInfo> entry : counters.entrySet()) {
+            data.put(entry.getKey(), entry.getValue());
+        }
+
+        for (Map.Entry<Histogram, MetricInfo> entry : histograms.entrySet()) {
+            data.put(entry.getKey(), entry.getValue());
+        }
+
+        for (Map.Entry<Meter, MetricInfo> entry : meters.entrySet()) {
+            data.put(entry.getKey(), entry.getValue());
+        }
+
+        return data;
+    }
 }
