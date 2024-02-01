@@ -12,6 +12,7 @@ import java.util.concurrent.ExecutionException;
  * @date: 2023/7/27
  **/
 public class TestCollectionForColToRow {
+
     public static void main(String[] args) throws ExecutionException, InterruptedException {
         FlinkLocalRunHandler flinkLocalRunHandler = new FlinkLocalRunHandler() {
 
@@ -37,7 +38,7 @@ public class TestCollectionForColToRow {
                         + "  'connector'='print'"
                         + ")";
 
-                String sql1_1="create view view_v1(id,arr) as\n" +
+                String sql1_1="CREATE VIEW view_v1(id,arr) as\n" +
                         "select id,ARRAY[ARRAY['k1','v1'],ARRAY['k2','v2']] from T01";
 
                 String sql2 = "INSERT INTO upsertSink\n" +
