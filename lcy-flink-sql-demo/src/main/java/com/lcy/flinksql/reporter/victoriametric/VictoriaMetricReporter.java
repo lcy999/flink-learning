@@ -306,7 +306,12 @@ public class VictoriaMetricReporter extends AbstractVictoriaMetricReporter<Victo
         }
 
         try{
-            JSONArray jaFilterMetrics = JSON.parseArray(filterMetricJson);
+            JSONObject requestMetricJo = JSON.parseObject(filterMetricJson);
+            if(!requestMetricJo.getBoolean("success")){
+                log.error("Failed when request filter http:{}",filterMetricUrl);
+            }
+
+            JSONArray jaFilterMetrics = requestMetricJo.getJSONArray("result");
             if(jaFilterMetrics.size()==0){
                 log.warn("Filter metric is empty, the http:{}", filterMetricUrl);
                 return;
