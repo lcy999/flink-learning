@@ -146,7 +146,9 @@ public class VictoriaMetricReporter extends AbstractVictoriaMetricReporter<Victo
         );
 
         if(isFilterMetric){
-            filterMetricUrl= Preconditions.checkNotNull(filterMetricUrl);
+            Preconditions.checkNotNull(filterMetricUrl);
+            Preconditions.checkArgument(reportCountForRequestFilterInfo==REPORT_COUNT_FOR_REQUEST_FILTER_INFO.defaultValue()
+                    ,"Please set reportCountForRequestFilterInfo when filter url");
             requestFilterMetricInfo();
         }
 
@@ -181,7 +183,7 @@ public class VictoriaMetricReporter extends AbstractVictoriaMetricReporter<Victo
                 HttpClientUtil.postJson(vmImportUrl, metricBuilder.toString(), null);
             }
 
-            if(isFilterMetric && reportCountForRequestFilterInfo!= REPORT_COUNT_FOR_REQUEST_FILTER_INFO.defaultValue()){
+            if(isFilterMetric){
                 currentReporterCounterForFilterInfo++;
 
                 if(currentReporterCounterForFilterInfo> reportCountForRequestFilterInfo){
