@@ -141,7 +141,7 @@ public class HttpClientUtil {
         post.setEntity(entity);
       }
       result = httpExecute(post);
-      LOG.info("consume time:{} ms", System.currentTimeMillis() - startTime);
+      LOG.debug("consume time:{} ms", System.currentTimeMillis() - startTime);
       return result;
     } catch (Exception e) {
       LOG.error(e.getMessage(), e);
@@ -237,7 +237,7 @@ public class HttpClientUtil {
     }
 
 
-    LOG.info("{} request url:{}, postData:{}",method,url,param);
+    LOG.debug("{} request url:{}, postData:{}",method,url,param);
     HttpResponse response = httpClient.execute(request);
     int rspCode = response.getStatusLine().getStatusCode();
     HttpEntity entity = response.getEntity();
@@ -245,7 +245,7 @@ public class HttpClientUtil {
       return null;
     }
     String entiry = EntityUtils.toString(entity, StandardCharsets.UTF_8);
-    LOG.info("response url:{}  ,code:{},  entity:{}",url,rspCode,entiry);
+    LOG.debug("response url:{}  ,code:{},  entity:{}",url,rspCode,entiry);
 
     return entiry;
   }

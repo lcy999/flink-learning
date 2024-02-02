@@ -181,7 +181,7 @@ public class VictoriaMetricReporter extends AbstractVictoriaMetricReporter<Victo
                 HttpClientUtil.postJson(vmImportUrl, metricBuilder.toString(), null);
             }
 
-            if(isFilterMetric){
+            if(isFilterMetric && reportCountForRequestFilterInfo!= REPORT_COUNT_FOR_REQUEST_FILTER_INFO.defaultValue()){
                 currentReporterCounterForFilterInfo++;
 
                 if(currentReporterCounterForFilterInfo> reportCountForRequestFilterInfo){
@@ -224,7 +224,7 @@ public class VictoriaMetricReporter extends AbstractVictoriaMetricReporter<Victo
             lableBuilder.append(","+groupKeyString);
         }
 
-        lableBuilder.append(","+ String.format("job=\"%s\"", jobName));
+        lableBuilder.append(","+ String.format("exported_job=\"%s\"", jobName));
 
         String lableString= lableBuilder.toString();
         String metricValue = getMetricValue(metric);
