@@ -25,7 +25,10 @@ public class TestCollectionForVmReporter {
         conf.setString("metrics.reporter.victoriametric.port","18429");
         conf.setString("metrics.reporter.victoriametric.groupingKey","k9=v9");
         conf.setString("metrics.reporter.victoriametric.jobName","localjob_"+curTime+"_");
-        conf.setString("metrics.reporter.victoriametric.metricNameSuffix","_localjob_"+curTime);
+        conf.setString("metrics.reporter.victoriametric.metricNameSuffix","_localtest01");
+//        conf.setString("metrics.reporter.victoriametric.filterMetric","true");
+//        conf.setString("metrics.reporter.victoriametric.reportCountForRequestFilterInfo","5");
+//        conf.setString("metrics.reporter.victoriametric.filterMetricUrl","http://localhost:8082/streamingSql/queryReporterMetric?metricName=");
 
         FlinkLocalRunHandler flinkLocalRunHandler = new FlinkLocalRunHandler(conf, true) {
 
@@ -47,7 +50,15 @@ public class TestCollectionForVmReporter {
 
                 String sql2 = "insert into upsertSink select id from autoCar";
 
-                return Lists.newArrayList(sql1, sql2);
+                String sql3 = "CREATE TABLE upsertSink02 ("
+                        + "  id INT"
+                        + ") WITH ("
+                        + "  'connector'='print'"
+                        + ")";
+
+                String sql4 = "insert into upsertSink02 select id from autoCar";
+
+                return Lists.newArrayList(sql1, sql2, sql3, sql4);
             }
         };
 

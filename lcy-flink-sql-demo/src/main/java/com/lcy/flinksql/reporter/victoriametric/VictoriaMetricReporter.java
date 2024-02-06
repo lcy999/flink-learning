@@ -147,7 +147,7 @@ public class VictoriaMetricReporter extends AbstractVictoriaMetricReporter<Victo
 
         if(isFilterMetric){
             Preconditions.checkNotNull(filterMetricUrl);
-            Preconditions.checkArgument(reportCountForRequestFilterInfo==REPORT_COUNT_FOR_REQUEST_FILTER_INFO.defaultValue()
+            Preconditions.checkArgument(reportCountForRequestFilterInfo!= REPORT_COUNT_FOR_REQUEST_FILTER_INFO.defaultValue()
                     ,"Please set reportCountForRequestFilterInfo when filter url");
             requestFilterMetricInfo();
         }

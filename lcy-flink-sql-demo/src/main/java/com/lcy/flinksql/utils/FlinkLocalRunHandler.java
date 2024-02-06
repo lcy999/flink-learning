@@ -11,6 +11,7 @@ import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.SqlParserException;
+import org.apache.flink.table.api.StatementSet;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.table.expressions.Expression;
@@ -84,15 +85,21 @@ public abstract class FlinkLocalRunHandler {
         }
 
         List<String> sqls = generateRunSql();
+        StatementSet statementSet = tEnv.createStatementSet();
         for (String sql : sqls) {
             try {
-                tEnv.executeSql(sql);
+                if(sql.startsWith("insert into")){
+                    statementSet.addInsertSql(sql);
+                }else{
+                    tEnv.executeSql(sql);
+                }
+
             }catch (SqlParserException sqlParserException){
                 log.error("parse failed sql: "+sql);
                 sqlParserException.printStackTrace();
             }
-
         }
+        statementSet.execute();
 
     }
 
