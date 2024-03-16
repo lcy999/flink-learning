@@ -52,9 +52,7 @@ public class KafkaDorisDemoForStatementSet {
 
         String sinkSql=String.format("CREATE TABLE user_info_kafka2doris_01 (\n" +
                 "  uname STRING,\n" +
-                "  addr STRING,\n" +
-                "  dt STRING,\n" +
-                "  hr STRING\n" +
+                "  count_num int\n" +
                 ") WITH (\n" +
                 "  'connector' = 'doris',\n" +
                 "  'fenodes' = '%s',\n" +
@@ -66,34 +64,27 @@ public class KafkaDorisDemoForStatementSet {
         System.out.println("sourceSql: "+sourceSql);
         System.out.println("sinkSql: "+sinkSql);
 
-        String dml="insert into user_info_kafka2doris_01 select * from user_info_01";
+        String filterView="create view view_user_filter as select * from user_info where addr='shanghai'";
+
+        String dml="insert into user_info_kafka2doris_01 select uname,count(1) from view_user_filter group by uname";
 
         StatementSet statementSet = tableEnv.createStatementSet();
 
         tableEnv.executeSql(sourceSql);
+        tableEnv.executeSql(filterView);
         tableEnv.executeSql(sinkSql);
         statementSet.addInsertSql(dml);
 
-        /*StreamExecutionEnvironment env02 = StreamExecutionEnvironment.getExecutionEnvironment();
-        EnvironmentSettings tableEnvSettings02 = EnvironmentSettings.newInstance()
-                .useBlinkPlanner()
-                .inStreamingMode()
-                .build();*/
-
-//        StreamTableEnvironment tableEnv02 = StreamTableEnvironment.create(env, tableEnvSettings);
 
         String sinkPrintSql="CREATE TABLE sink_print (\n" +
-                "  uname STRING,\n" +
                 "  addr STRING,\n" +
-                "  dt STRING,\n" +
-                "  hr STRING\n" +
+                "  count_num int\n" +
                 ") WITH (\n" +
                 "  'connector' = 'print'\n" +
                 ")";
 
-        String dmlPrint="insert into sink_print select * from user_info_01";
+        String dmlPrint="insert into sink_print select addr,count(1) from view_user_filter group by addr";
 
-//        tableEnv.executeSql(sourceSql.replace("user_info_01","user_info_02"));
         tableEnv.executeSql(sinkPrintSql);
         statementSet.addInsertSql(dmlPrint);
 
