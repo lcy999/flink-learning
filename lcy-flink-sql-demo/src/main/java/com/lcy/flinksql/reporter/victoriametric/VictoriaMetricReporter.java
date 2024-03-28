@@ -96,7 +96,8 @@ public class VictoriaMetricReporter extends AbstractVictoriaMetricReporter<Victo
                     "Invalid host/port configuration. Host: " + host + " Port: " + port);
         }
 
-        String vmUrlFormat = "http://%s:%s/api/v1/import/prometheus";
+//        String vmUrlFormat = "http://%s:%s/api/v1/import/prometheus";
+        String vmUrlFormat = "http://%s:%s/insert/0/prometheus/api/v1/import/prometheus";
         vmImportUrl = String.format(vmUrlFormat,host, port);
 
         String configuredJobName = metricConfig.getString(JOB_NAME.key(), JOB_NAME.defaultValue());

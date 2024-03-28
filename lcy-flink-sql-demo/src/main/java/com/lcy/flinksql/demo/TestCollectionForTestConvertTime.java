@@ -33,6 +33,7 @@ public class TestCollectionForTestConvertTime {
                         + "  ts TIMESTAMP(3),"
                         + "  tsDate String,"
                         + "  tsNow String,"
+                        + "  myDate DATE,"
                         + "  diff int"
                         + ") WITH ("
                         + "  'connector'='print'"
@@ -42,6 +43,7 @@ public class TestCollectionForTestConvertTime {
                         " , TO_TIMESTAMP(DATE_FORMAT(FROM_UNIXTIME(ts/1000),'yyyy-MM-dd HH:mm:ss'))" +
                         " , DATE_FORMAT(FROM_UNIXTIME(ts/1000), 'yyyy-MM-dd')" +
                         " , DATE_FORMAT(CURRENT_TIMESTAMP, 'yyyyMMdd000000')" +
+                        " , cast(text as Date)" +
 //                        " , TIMESTAMPDIFF(DAY,TO_TIMESTAMP_LTZ(ts,3),CURRENT_TIMESTAMP) " +
                         " , TIMESTAMPDIFF(MINUTE,TO_TIMESTAMP('2024-01-16 09:42','yyyy-MM-dd HH:mm'),TO_TIMESTAMP('2024-01-16 09:43','yyyy-MM-dd HH:mm')) " +
                         " FROM T01 where '2023-11-15 16:20:00 596' < '2023-11-16 00:00:00' " +

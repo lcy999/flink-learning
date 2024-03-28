@@ -59,7 +59,7 @@ public abstract class FlinkLocalRunHandler {
     public FlinkLocalRunHandler(Configuration configuration, boolean isAutoCar){
         this(configuration);
         if(isAutoCar){
-            DataStreamSource<Tuple4<Integer, Integer, Double, Long>> tuple4DataStreamSource = env.addSource(AutoCarSource.create(2));
+            DataStreamSource<Tuple4<Integer, Integer, Double, Long>> tuple4DataStreamSource = env.addSource(AutoCarSource.create(10));
             ArrayList<String> fieldNames = Lists.newArrayList("id", "speed", "distance", "time");
             List<Expression> expressions = fieldNames.stream().map(fname -> $(fname)).collect(Collectors.toList());
             Expression[] fieldNamesExpression = expressions.toArray(new Expression[fieldNames.size()]);
@@ -88,7 +88,7 @@ public abstract class FlinkLocalRunHandler {
         StatementSet statementSet = tEnv.createStatementSet();
         for (String sql : sqls) {
             try {
-                if(sql.startsWith("insert into")){
+                if(sql.toLowerCase().startsWith("insert into")){
                     statementSet.addInsertSql(sql);
                 }else{
                     tEnv.executeSql(sql);
