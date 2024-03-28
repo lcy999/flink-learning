@@ -24,6 +24,11 @@ public class FilterMetricInfo {
         excludeMetric.add(metric);
     }
 
+    public void clearAllMetric(){
+        includeMetric.clear();
+        excludeMetric.clear();
+    }
+
     public boolean filterMetric(String metricName){
         if(includeMetric.size()> 0){
             return includeMetric.contains(metricName);

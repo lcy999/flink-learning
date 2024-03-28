@@ -318,6 +318,8 @@ public class VictoriaMetricReporter extends AbstractVictoriaMetricReporter<Victo
             if(jaFilterMetrics.size()==0){
                 log.warn("Filter metric is empty, the http:{}", filterMetricUrl);
                 return;
+            }else{
+                filterMetricInfo.clearAllMetric();
             }
 
             for(int i=0; i<jaFilterMetrics.size(); i++){
