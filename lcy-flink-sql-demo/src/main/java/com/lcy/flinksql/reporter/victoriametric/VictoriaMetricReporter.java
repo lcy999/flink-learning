@@ -77,6 +77,7 @@ public class VictoriaMetricReporter extends AbstractVictoriaMetricReporter<Victo
 
     private static final char SCOPE_SEPARATOR = '_';
     private static final String SCOPE_PREFIX = "flink" + SCOPE_SEPARATOR;
+    private boolean isPrintMetric= true;
     private boolean filterLableValueCharacter;
     private int reportCountForRequestFilterInfo;
     private FilterMetricInfo filterMetricInfo= new FilterMetricInfo();
@@ -188,6 +189,11 @@ public class VictoriaMetricReporter extends AbstractVictoriaMetricReporter<Victo
                 currentReporterCounterForFilterInfo++;
 
                 if(currentReporterCounterForFilterInfo> reportCountForRequestFilterInfo){
+
+                    if(isPrintMetric){
+                        log.info("report http url: {}, metric info:{}",vmImportUrl, metricBuilder.toString());
+                    }
+
                     currentReporterCounterForFilterInfo= 0;
                     requestFilterMetricInfo();
                 }
@@ -333,6 +339,8 @@ public class VictoriaMetricReporter extends AbstractVictoriaMetricReporter<Victo
                     filterMetricInfo.addExcludeMetric(metricName);
                 }
             }
+            log.info("after request http, filterMetricInfo IncludeMetric :{}, ExcludeMetric:{}"
+            ,filterMetricInfo.getIncludeMetric(), filterMetricInfo.getExcludeMetric());
         }catch (Exception e){
             log.error("Failed when parse filter information with the http:{}, {}",filterMetricUrl, e);
         }

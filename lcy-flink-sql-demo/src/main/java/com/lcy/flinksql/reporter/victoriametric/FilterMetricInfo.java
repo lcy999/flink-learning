@@ -38,4 +38,12 @@ public class FilterMetricInfo {
             return true;
         }
     }
+
+    public List<String> getExcludeMetric() {
+        return excludeMetric;
+    }
+
+    public List<String> getIncludeMetric() {
+        return includeMetric;
+    }
 }
