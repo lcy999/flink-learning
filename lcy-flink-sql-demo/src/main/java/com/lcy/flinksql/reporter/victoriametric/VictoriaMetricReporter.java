@@ -254,6 +254,9 @@ public class VictoriaMetricReporter extends AbstractVictoriaMetricReporter<Victo
         Object value= null;
         if(metric instanceof Gauge){
             value = ((Gauge)metric).getValue();
+            if (value instanceof Boolean) {
+                value= ((Boolean) value) ? 1 : 0;
+            }
         }else if(metric instanceof Counter){
             Counter counter= (Counter) metric;
             value= counter.getCount();
