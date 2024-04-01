@@ -303,6 +303,7 @@ public class VictoriaMetricReporter extends AbstractVictoriaMetricReporter<Victo
 
     private void requestFilterMetricInfo(){
         String filterMetricJson = HttpClientUtil.postJsonWithParam(filterMetricUrl, null, null);
+        log.info("request filter url:{},response: {}", filterMetricUrl, filterMetricJson);
         if(StringUtils.isNullOrWhitespaceOnly(filterMetricJson)){
             log.error("Failed when request filter http: "+filterMetricUrl);
             return;
