@@ -251,25 +251,29 @@ public class VictoriaMetricReporter extends AbstractVictoriaMetricReporter<Victo
 
 
     public String getMetricValue(Metric metric) {
-        Object value= null;
+        double result= 0;
         if(metric instanceof Gauge){
-            value = ((Gauge)metric).getValue();
-            if (value instanceof Boolean) {
-                value= ((Boolean) value) ? 1 : 0;
+            Object value = ((Gauge)metric).getValue();
+            if (value == null) {
+                log.debug("Gauge {} is null-valued, defaulting to 0.", metric);
+                result= 0;
+            }else if(value instanceof Boolean) {
+                result= ((Boolean) value) ? 1 : 0;
+            }else if (value instanceof Double) {
+                result= (double) value;
+            }else if (value instanceof Number) {
+                result= ((Number) value).doubleValue();
             }
+
         }else if(metric instanceof Counter){
             Counter counter= (Counter) metric;
-            value= counter.getCount();
+            result= (double) counter.getCount();
         }else if(metric instanceof Meter){
             Meter meter= (Meter) metric;
-            value= meter.getRate();
+            result= meter.getRate();
         }
 
-        if (value == null) {
-            log.info("metric {} is null-valued, defaulting to 0.", metric);
-            value= "0";
-        }
-        return String.valueOf(value);
+        return String.valueOf(result);
     }
 
     @VisibleForTesting
