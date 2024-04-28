@@ -315,22 +315,27 @@ public class VictoriaMetricReporter extends AbstractVictoriaMetricReporter<Victo
     }
 
     private void requestFilterMetricInfo(){
-        String filterMetricJson = HttpClientUtil.postJsonWithParam(filterMetricUrl, null, null);
-        log.info("request filter url:{},response: {}", filterMetricUrl, filterMetricJson);
+        String curFilterMetricUrl= filterMetricUrl;
+        if(curFilterMetricUrl.contains("jobName")){
+            curFilterMetricUrl+=jobName;
+        }
+
+        String filterMetricJson = HttpClientUtil.postJsonWithParam(curFilterMetricUrl, null, null);
+        log.info("request filter url:{},response: {}", curFilterMetricUrl, filterMetricJson);
         if(StringUtils.isNullOrWhitespaceOnly(filterMetricJson)){
-            log.error("Failed when request filter http: "+filterMetricUrl);
+            log.error("Failed when request filter http: "+curFilterMetricUrl);
             return;
         }
 
         try{
             JSONObject requestMetricJo = JSON.parseObject(filterMetricJson);
             if(!requestMetricJo.getBoolean("success")){
-                log.error("Failed when request filter http:{}",filterMetricUrl);
+                log.error("Failed when request filter http:{}",curFilterMetricUrl);
             }
 
             JSONArray jaFilterMetrics = requestMetricJo.getJSONArray("result");
             if(jaFilterMetrics.size()==0){
-                log.warn("Filter metric is empty, the http:{}", filterMetricUrl);
+                log.warn("Filter metric is empty, the http:{}", curFilterMetricUrl);
                 return;
             }else{
                 filterMetricInfo.clearAllMetric();
@@ -349,7 +354,7 @@ public class VictoriaMetricReporter extends AbstractVictoriaMetricReporter<Victo
             log.info("after request http, filterMetricInfo IncludeMetric :{}, ExcludeMetric:{}"
             ,filterMetricInfo.getIncludeMetric(), filterMetricInfo.getExcludeMetric());
         }catch (Exception e){
-            log.error("Failed when parse filter information with the http:{}, {}",filterMetricUrl, e);
+            log.error("Failed when parse filter information with the http:{}, {}",curFilterMetricUrl, e);
         }
 
     }
