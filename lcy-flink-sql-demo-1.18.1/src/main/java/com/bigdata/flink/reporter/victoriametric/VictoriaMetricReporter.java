@@ -50,6 +50,7 @@ import static com.bigdata.flink.reporter.victoriametric.VictoriaMetricReporterOp
 import static com.bigdata.flink.reporter.victoriametric.VictoriaMetricReporterOptions.PORT;
 import static com.bigdata.flink.reporter.victoriametric.VictoriaMetricReporterOptions.RANDOM_JOB_NAME_SUFFIX;
 import static com.bigdata.flink.reporter.victoriametric.VictoriaMetricReporterOptions.REPORT_COUNT_FOR_REQUEST_FILTER_INFO;
+import static com.bigdata.flink.reporter.victoriametric.VictoriaMetricReporterOptions.VICTORIA_METRIC_SERVER_MODE;
 
 /** {@link MetricReporter} that exports {@link Metric Metrics} via InfluxDB. */
 public class VictoriaMetricReporter extends AbstractVictoriaMetricReporter<VictoriaMetricInfo> implements Scheduled {
@@ -94,8 +95,12 @@ public class VictoriaMetricReporter extends AbstractVictoriaMetricReporter<Victo
                     "Invalid host/port configuration. Host: " + host + " Port: " + port);
         }
 
-//        String vmUrlFormat = "http://%s:%s/api/v1/import/prometheus";
+        String victoriaMetricServerMode = metricConfig.getString(VICTORIA_METRIC_SERVER_MODE.key(), VICTORIA_METRIC_SERVER_MODE.defaultValue());
+
         String vmUrlFormat = "http://%s:%s/insert/0/prometheus/api/v1/import/prometheus";
+        if(victoriaMetricServerMode.toLowerCase().equals("single")){
+            vmUrlFormat = "http://%s:%s/api/v1/import/prometheus";
+        }
         vmImportUrl = String.format(vmUrlFormat,host, port);
 
         String configuredJobName = metricConfig.getString(JOB_NAME.key(), JOB_NAME.defaultValue());

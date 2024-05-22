@@ -101,6 +101,11 @@ public class VictoriaMetricReporterOptions {
                                                     "Prometheus requirements"))
                                     .build());
 
+    public static final ConfigOption<String> VICTORIA_METRIC_SERVER_MODE =
+            ConfigOptions.key("victoriaMetricServerMode")
+                    .defaultValue("cluster")
+                    .withDescription("single: one node server. cluster:more node server");
+
 
 
 }
