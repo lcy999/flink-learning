@@ -3,7 +3,6 @@ package com.lcy.flinksql.udf;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.bigdata.flink.udf.beans.ParseJsonKeyListAccumulator;
 import org.apache.flink.table.functions.AggregateFunction;
 
 import java.sql.Timestamp;

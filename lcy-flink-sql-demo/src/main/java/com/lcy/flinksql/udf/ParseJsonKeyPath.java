@@ -2,9 +2,9 @@ package com.lcy.flinksql.udf;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.bigdata.flink.udf.tools.BaseUdf;
-import com.bigdata.flink.udf.tools.UdfExceptionHandler;
 import com.google.common.collect.Lists;
+import com.lcy.flinksql.tools.BaseUdf;
+import com.lcy.flinksql.tools.UdfExceptionHandler;
 
 import java.util.ArrayList;
 import java.util.List;

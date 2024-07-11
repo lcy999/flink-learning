@@ -27,7 +27,7 @@ import org.apache.flink.configuration.description.LinkElement;
 import org.apache.flink.configuration.description.TextElement;
 
 /** Config options for the {@link VictoriaMetricReporter}. */
-@Documentation.SuffixOption(ConfigConstants.METRICS_REPORTER_PREFIX + "victoriametrics")
+@Documentation.SuffixOption(ConfigConstants.METRICS_REPORTER_PREFIX + "victoriametric")
 public class VictoriaMetricReporterOptions {
 
     public static final ConfigOption<String> HOST =
