@@ -41,7 +41,7 @@ public class FlinkReadAndUpdateState {
     @Test
     public void t_write_and_generate_checkpoint_by_collection_data() throws Exception {
         Collection<KeyedState> data =
-                Arrays.asList(new KeyedState("hive", 1), new KeyedState("JasonLee1", 100), new KeyedState("hhase", 3));
+                Arrays.asList(new KeyedState("hive", 1L), new KeyedState("JasonLee1", 100L), new KeyedState("hhase", 3L));
         int maxParallelism = 128;
 
         ExecutionEnvironment bEnv = ExecutionEnvironment.getExecutionEnvironment();
@@ -65,7 +65,7 @@ public class FlinkReadAndUpdateState {
         //1. 手动执行GenerateStateDemo，产生checkpoint
         //2. 读取ck文件状态数据
         String operatorUid="my-uid";
-        String ckFile="L:\\test\\test55_savepoints\\run_checkpoint\\b246f15b2a983e0c852b8cbd4c29bf7f\\chk-3";
+        String ckFile="L:\\test\\test55_savepoints\\run_checkpoint\\4372df3ef94840392ff876a5ff1f7a6f\\chk-2";
         stateRead(operatorUid, ckFile);
     }
 
@@ -94,7 +94,7 @@ public class FlinkReadAndUpdateState {
         DataSet<KeyedState> dataKeyedState = savepoint.readKeyedState(readUid, new ReaderFunction());
         DataSet<KeyedState> dataKeyedStateModify =dataKeyedState.map(keyedState -> {
             if(keyedState.key.equals("lcy-65")){
-                keyedState.value=100;
+                keyedState.value=100L;
             }
             return keyedState;
         });
@@ -113,11 +113,11 @@ public class FlinkReadAndUpdateState {
     }
 
     public static class WriterFunction extends KeyedStateBootstrapFunction<String, KeyedState> {
-        ValueState<Integer> state;
+        ValueState<Long> state;
         @Override
         public void open(Configuration parameters) throws Exception {
 
-            ValueStateDescriptor<Integer> stateDescriptor = new ValueStateDescriptor<>("state", Types.INT);
+            ValueStateDescriptor<Long> stateDescriptor = new ValueStateDescriptor<>("lcystate", Types.LONG);
             state = getRuntimeContext().getState(stateDescriptor);
         }
 
@@ -128,11 +128,11 @@ public class FlinkReadAndUpdateState {
     }
 
     public static class ReaderFunction extends KeyedStateReaderFunction<String, KeyedState> {
-        ValueState<Integer> state;
+        ValueState<Long> state;
 
         @Override
         public void open(Configuration parameters) {
-            ValueStateDescriptor<Integer> stateDescriptor = new ValueStateDescriptor<>("state", Types.INT);
+            ValueStateDescriptor<Long> stateDescriptor = new ValueStateDescriptor<>("lcystate", Types.LONG);
             state = getRuntimeContext().getState(stateDescriptor);
         }
 
@@ -151,9 +151,9 @@ public class FlinkReadAndUpdateState {
 
     public static class KeyedState {
         public String key;
-        public int value;
+        public Long value;
 
-        public KeyedState(String key, int value) {
+        public KeyedState(String key, Long value) {
             this.key = key;
             this.value = value;
         }

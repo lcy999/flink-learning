@@ -44,14 +44,14 @@ public class TestCollectionForDataGen {
                         + ")";
 
                 String sqlSink = "CREATE TABLE upsertSink ("
-                        + "  id INT,"
-                        + "  age INT"
+                        + "  uid string,"
+                        + "  cnt_num BIGINT"
                         + ") WITH ("
                         + "  'connector'='print'"
                         + ")";
 
 
-                String sqlInsert = "insert into upsertSink select id, age from source_datagen" ;
+                String sqlInsert = "insert into upsertSink select CONCAT('lcy-',cast(id as string)),count(id) from source_datagen group by CONCAT('lcy-',cast(id as string))" ;
 
                 return Lists.newArrayList(sqlSource, sqlSink, sqlInsert);
             }

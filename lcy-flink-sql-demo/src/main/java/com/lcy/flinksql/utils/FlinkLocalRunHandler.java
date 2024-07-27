@@ -7,6 +7,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.api.java.tuple.Tuple4;
 import org.apache.flink.calcite.shaded.com.google.common.collect.Lists;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.runtime.state.hashmap.HashMapStateBackend;
+import org.apache.flink.streaming.api.CheckpointingMode;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.EnvironmentSettings;
@@ -45,6 +47,17 @@ public abstract class FlinkLocalRunHandler {
         }
         env.getConfig().enableObjectReuse();
         env.getConfig().setParallelism(1);
+
+        env.enableCheckpointing(10000L);
+        env.getCheckpointConfig().setCheckpointingMode(CheckpointingMode.EXACTLY_ONCE);
+
+        env.setStateBackend(new HashMapStateBackend());
+        env.getCheckpointConfig().setCheckpointStorage("file:///L:\\test\\test55_savepoints\\run_checkpoint");
+
+        // 确保检查点之间有至少500 ms的间隔【checkpoint最小间隔】
+        env.getCheckpointConfig().setMinPauseBetweenCheckpoints(500);
+
+        env.getCheckpointConfig().setMaxConcurrentCheckpoints(1);
 
         EnvironmentSettings tableEnvSettings = EnvironmentSettings.newInstance()
 //                .useBlinkPlanner()
