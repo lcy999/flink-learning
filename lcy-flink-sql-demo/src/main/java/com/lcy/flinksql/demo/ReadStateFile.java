@@ -19,6 +19,7 @@ import org.apache.flink.util.Collector;
 public class ReadStateFile {
     public static void main(String[] args) throws Exception {
         ExecutionEnvironment bEnv = ExecutionEnvironment.getExecutionEnvironment();
+        bEnv.setParallelism(1);
         ExistingSavepoint savepoint = Savepoint.load(bEnv, "file:/L:/test/test55_savepoints/ck-09/_metadata", new RocksDBStateBackend("file:/L:/test/test55_savepoints"));
 
         savepoint

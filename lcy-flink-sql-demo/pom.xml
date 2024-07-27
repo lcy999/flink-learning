@@ -223,6 +223,15 @@
             <scope>${scope.value}</scope>
         </dependency>
 
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-runtime_2.11</artifactId>
+            <version>1.13.5</version>
+            <scope>${scope.value}</scope>
+        </dependency>
+
+
+
     </dependencies>
 
     <profiles>
